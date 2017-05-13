@@ -11,9 +11,9 @@ import codecs
 class XiamiTestPipeline(object):
 
     def open_spider(self, spider):
-        self.artistJsonFile = codecs.open('artistJ.json','w+',buffering=1000,encoding='utf-8')
-        self.albumJsonFile = codecs.open('albumJ.json','w+',buffering=1000,encoding='utf-8')
-        self.songJsonFile = codecs.open('songJ.json','w+',buffering=1000,encoding='utf-8')
+        self.artistJsonFile = codecs.open('artistJ.json','w+',buffering=100,encoding='utf-8')
+        self.albumJsonFile = codecs.open('albumJ.json','w+',buffering=100,encoding='utf-8')
+        self.songJsonFile = codecs.open('songJ.json','w+',buffering=100,encoding='utf-8')
 
     def close_spider(self, spider):
         self.artistJsonFile.close()
