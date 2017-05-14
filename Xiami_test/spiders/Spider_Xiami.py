@@ -16,7 +16,8 @@ class XiaMiSpider(CrawlSpider):
     name = 'xiamiSpider'
     allowed_domains = ['xiami.com']
     start_urls = []
-    for i in xrange(1, 416):
+    # total 416 1-50 51-180 181-416
+    for i in xrange(1, 50):
         start_urls.append('http://www.xiami.com/artist/index/c/2/type/0/class/0/page/' + str(i))
 
     rules = (
