@@ -38,11 +38,12 @@ class XiaMiSpider(CrawlSpider):
     allowed_domains = ['xiami.com']
     start_urls = []
     # total 416 1-50 51-180 181-416
-    '''
-    for i in xrange(1, 50):
+
+    for i in xrange(101, 416):
         start_urls.append('http://www.xiami.com/artist/index/c/2/type/0/class/0/page/' + str(i))
-    '''
-    start_urls.append("http://www.xiami.com/song/cpOAef95f9")
+
+    # test for one song
+    # start_urls.append("http://www.xiami.com/song/2320833")
     rules = (
         # Extract links matching 'category.php' (but not matching 'subsection.php')
         # and follow links from them (since no callback means follow=True by default).
