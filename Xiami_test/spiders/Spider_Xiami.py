@@ -9,17 +9,40 @@ from time import sleep
 
 
 def ToJsonStr(str1):
-    return str1.replace('\"', '\\\"').replace('\\', '\\\\').replace('/', '\\/').replace('\b', ' ').replace('\f', ' ') \
+    return str1.replace('\\', '\\\\').replace('\"', '\\\"').replace('/', '\\/').replace('\b', ' ').replace('\f', ' ') \
         .replace('\n', ' ').replace('\r', ' ').replace('\t', ' ')
+
+def str2url(s):
+    import urllib2
+    # s = '9hFaF2FF%_Et%m4F4%538t2i%795E%3pF.265E85.%fnF9742Em33e162_36pA.t6661983%x%6%%74%2i2%22735'
+    num_loc = s.find('h')
+    rows = int(s[0:num_loc])
+    strlen = len(s) - num_loc
+    cols = strlen / rows
+    right_rows = strlen % rows
+    new_s = s[num_loc:]
+    output = ''
+    for i in xrange(len(new_s)):
+        x = i % rows
+        y = i / rows
+        p = 0
+        if x <= right_rows:
+            p = x * (cols + 1) + y
+        else:
+            p = right_rows * (cols + 1) + (x - right_rows) * cols + y
+        output += new_s[p]
+    return urllib2.unquote(output).replace('^', '0')
 
 class XiaMiSpider(CrawlSpider):
     name = 'xiamiSpider'
     allowed_domains = ['xiami.com']
     start_urls = []
     # total 416 1-50 51-180 181-416
+    '''
     for i in xrange(1, 50):
         start_urls.append('http://www.xiami.com/artist/index/c/2/type/0/class/0/page/' + str(i))
-
+    '''
+    start_urls.append("http://www.xiami.com/song/cpOAef95f9")
     rules = (
         # Extract links matching 'category.php' (but not matching 'subsection.php')
         # and follow links from them (since no callback means follow=True by default).
@@ -140,9 +163,29 @@ class XiaMiSpider(CrawlSpider):
                 item['artistPict'] = pictureURL[0]
 
             albumURL = u"http://www.xiami.com" + "".join(response.xpath(u"//*[@id='nav']/a[3]/@href").extract())
-        yield scrapy.Request(albumURL)
+        yield scrapy.Request(albumURL, callback=self.parse_albumPage)
         yield item
 
+    # list of album PAGE
+    def parse_albumPage(self, response):
+        # extract album url, invoke parse_album
+        albumShortURLs = response.xpath((u"//*[@id='artist_albums']//div[@class='detail']//p[@class='name']//a[con"
+                                         u"tains(@href,'album')]/@href")).extract()
+        for su in albumShortURLs:
+            albumURL = u"http://www.xiami.com" + "".join(su)
+            yield scrapy.Request(albumURL, callback=self.parse_album)
+        # extract next page, invoke parse_albumPage (if next page exist)
+        nowPage = response.xpath(u"//*[@id='artist_albums']/div[@class='all_page']/a[contains(@class,'cur')]/text("
+                                 u")").extract()
+        if len(nowPage):
+            nowPage = int(nowPage[0])
+            nextURL = response.xpath((u"//*[@id='artist_albums']/div[@class='all_page']/a[contains(@hr"
+                                  u"ef,'=" + str(nowPage+1) + u"')]/@href")).extract()
+            if len(nextURL):
+                nextURL = u"http://www.xiami.com" + "".join(nextURL[0])
+                yield scrapy.Request(nextURL, callback=self.parse_albumPage)
+
+    # album information PAGE
     def parse_album(self, response):
         sleep(2)
         item = XiamiAlbumItem()
@@ -257,4 +300,26 @@ class XiaMiSpider(CrawlSpider):
             for songID in songRelatedIdList:
                 item['songRelatedID'].append(songID.split('/')[-1])
 
+        realURLList = response.xpath(u"/html/head/link[contains(@rel,'canonical')]/@href").extract()
+
+        if len(realURLList):
+            realID = realURLList[0].split('/')[-1]
+            item['songRealID'] = realID
+
+        #download mp3 file
+        baseurl = "http://www.xiami.com/widget/xml-single/uid/0/sid/"
+        yield scrapy.Request(baseurl+realID, callback=self.parse_download)
         yield item
+
+    def parse_download(self, response):
+        location = response.xpath(u"//location/text()").extract()
+
+        if len(location):
+            location = location[0]
+            urlmp3 = str2url(location)
+            item = XiamiMP3item()
+            item['file_urls'] = urlmp3
+            item['songID'] = response.xpath(u"//song_id/text()").extract()[0]
+            yield item
+
+

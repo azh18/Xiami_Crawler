@@ -96,9 +96,10 @@ DOWNLOADER_MIDDLEWARES = {
         'Xiami_test.rotate_useragent.RotateUserAgentMiddleware' :400,
         'Xiami_test.RandomProxy.ProxyMiddleware' :410
     }
-
+FILES_STORE = 'D:\Code\Crawler_Xiami\Xiami_test\Xiami_test\mp3files'
 ITEM_PIPELINES = {
-    'Xiami_test.pipelines.XiamiTestPipeline': 300
+    'Xiami_test.pipelines.XiamiTestPipeline': 300,
+    'Xiami_test.pipelines.XiamiPipelineWithDownload': 200
 }
 
 # LOG_LEVEL = 'INFO'

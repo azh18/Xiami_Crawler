@@ -69,6 +69,11 @@ class XiamiSongItem(scrapy.Item):
     songCommentNum = scrapy.Field()
     songRelated = scrapy.Field()
     songRelatedID = scrapy.Field()
+    songRealID = scrapy.Field()
+
+class XiamiMP3item(scrapy.Item):
+    file_urls = scrapy.Field()
+    songID = scrapy.Field()
 
 
 

@@ -7,6 +7,9 @@
 
 import json
 import codecs
+import scrapy
+from scrapy.pipelines.files import FilesPipeline
+from scrapy.exceptions import DropItem
 
 class XiamiTestPipeline(object):
 
@@ -43,3 +46,21 @@ class XiamiTestPipeline(object):
             print('write a song record')
             pass
         return item
+
+class XiamiPipelineWithDownload(FilesPipeline):
+
+    def get_media_requests(self, item, info):
+        if 'file_urls' in item:
+            yield scrapy.Request(item["file_urls"], meta={'id':item["songID"]})
+
+    def file_path(self, request, response=None, info=None):
+        songID = request.meta['id']
+        songURL = request.url
+        if "?" in songURL:
+            file_guid = songID + '.' + songURL.split('?')[-2].split('.')[-1]
+            filename = u'{0}'.format(file_guid)
+        else:
+            file_guid = songID + '.' + songURL.split('/')[-1].split('.')[-1]
+            filename = u'{0}'.format(file_guid)
+        return filename
+
