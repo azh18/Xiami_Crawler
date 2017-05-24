@@ -39,7 +39,7 @@ class XiaMiSpider(CrawlSpider):
     start_urls = []
     # total 416 1-50 51-180 181-416
 
-    for i in xrange(101, 416):
+    for i in xrange(21, 30):
         start_urls.append('http://www.xiami.com/artist/index/c/2/type/0/class/0/page/' + str(i))
 
     # test for one song
@@ -99,11 +99,11 @@ class XiaMiSpider(CrawlSpider):
                     styles.append(ToJsonStr(i.split('/')[-1]))
                 item['artistStyleID'] = styles
             # fans number and comment number
-            fans = response.xpath("//*[@id='sidebar']/div[1]/ul/li[2]/a/text()").extract()
+            fans = response.xpath("//*[@id='glory-aside']/div[1]/ul/li[2]/a/text()").extract()
             if len(fans):
                 fans = fans[0]
                 item['artistFansNum'] = atoi(fans)
-            comment = response.xpath("//*[@id='sidebar']/div[1]/ul/li[3]/a/text()").extract()
+            comment = response.xpath("//*[@id='glory-aside']/div[1]/ul/li[3]/a/text()").extract()
             if len(comment):
                 comment = comment[0]
                 item['artistCommentNum'] = atoi(comment)
@@ -112,7 +112,7 @@ class XiaMiSpider(CrawlSpider):
             if len(pictureURL):
                 item['artistPict'] = pictureURL[0]
 
-            albumURL = u"http://www.xiami.com" + "".join(response.xpath(u"//*[@id='nav']/a[3]/@href").extract())
+            albumURL = u"http://www.xiami.com" + "".join(response.xpath(u"//*[@id='glory-nav']/a[4]/@href").extract())
 
         else:
             if len(response.xpath(u"//*[@id='title']/h1/text()").extract()) == 0:
@@ -178,13 +178,22 @@ class XiaMiSpider(CrawlSpider):
         # extract next page, invoke parse_albumPage (if next page exist)
         nowPage = response.xpath(u"//*[@id='artist_albums']/div[@class='all_page']/a[contains(@class,'cur')]/text("
                                  u")").extract()
-        if len(nowPage):
-            nowPage = int(nowPage[0])
-            nextURL = response.xpath((u"//*[@id='artist_albums']/div[@class='all_page']/a[contains(@hr"
-                                  u"ef,'=" + str(nowPage+1) + u"')]/@href")).extract()
-            if len(nextURL):
-                nextURL = u"http://www.xiami.com" + "".join(nextURL[0])
-                yield scrapy.Request(nextURL, callback=self.parse_albumPage)
+        if ("i.xiami.com" in response.url):
+            if len(nowPage):
+                nowPage = int(nowPage[0])
+                nextURL = response.xpath((u"//*[@id='artist_albums']/div[@class='all_page']/a[contains(@hr"
+                                      u"ef,'" + str(nowPage+1) + u"?')]/@href")).extract()
+                if len(nextURL):
+                    nextURL = u"http://i.xiami.com" + "".join(nextURL[0])
+                    yield scrapy.Request(nextURL, callback=self.parse_albumPage)
+        else:
+            if len(nowPage):
+                nowPage = int(nowPage[0])
+                nextURL = response.xpath((u"//*[@id='artist_albums']/div[@class='all_page']/a[contains(@hr"
+                                      u"ef,'=" + str(nowPage+1) + u"')]/@href")).extract()
+                if len(nextURL):
+                    nextURL = u"http://www.xiami.com" + "".join(nextURL[0])
+                    yield scrapy.Request(nextURL, callback=self.parse_albumPage)
 
     # album information PAGE
     def parse_album(self, response):
@@ -229,7 +238,7 @@ class XiaMiSpider(CrawlSpider):
         if len(songURL):
             for elem in songURL:
                 elem = u"http://www.xiami.com" + elem
-                yield scrapy.Request(elem)
+                yield scrapy.Request(elem, callback=self.parse_song)
         songURL = response.xpath(u"//*[@id='track']//tr//td[@class='song_name']/a[contains(@href,'song')]/@href").extract()
         if len(songURL):
             item['albumSongID'] = []
@@ -314,13 +323,14 @@ class XiaMiSpider(CrawlSpider):
 
     def parse_download(self, response):
         location = response.xpath(u"//location/text()").extract()
-
+        item = XiamiMP3item()
         if len(location):
             location = location[0]
             urlmp3 = str2url(location)
-            item = XiamiMP3item()
             item['file_urls'] = urlmp3
             item['songID'] = response.xpath(u"//song_id/text()").extract()[0]
-            yield item
+        else:
+            item['file_urls'] = "noURL" # 没有url
+        yield item
 
 

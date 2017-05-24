@@ -14,10 +14,13 @@ from scrapy.exceptions import DropItem
 class XiamiTestPipeline(object):
 
     def open_spider(self, spider):
-        self.artistJsonFile = codecs.open('artistJ.json','w+',buffering=100,encoding='utf-8')
-        self.albumJsonFile = codecs.open('albumJ.json','w+',buffering=100,encoding='utf-8')
-        self.songJsonFile = codecs.open('songJ.json','w+',buffering=100,encoding='utf-8')
-
+        self.artistJsonFile = codecs.open('artistJ.json','a+',buffering=100,encoding='utf-8')
+        self.artistJsonFile.write("\n")
+        self.albumJsonFile = codecs.open('albumJ.json','a+',buffering=100,encoding='utf-8')
+        self.albumJsonFile.write("\n")
+        self.songJsonFile = codecs.open('songJ.json','a+',buffering=100,encoding='utf-8')
+        self.songJsonFile.write("\n")
+        
     def close_spider(self, spider):
         self.artistJsonFile.close()
         self.albumJsonFile.close()
@@ -51,7 +54,9 @@ class XiamiPipelineWithDownload(FilesPipeline):
 
     def get_media_requests(self, item, info):
         if 'file_urls' in item:
-            yield scrapy.Request(item["file_urls"], meta={'id':item["songID"]})
+            if "noURL" not in item['file_urls']:
+                print("Downloading song ..." + item['songID'])
+                yield scrapy.Request(item["file_urls"], meta={'id':item["songID"]})
 
     def file_path(self, request, response=None, info=None):
         songID = request.meta['id']
