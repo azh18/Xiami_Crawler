@@ -49,7 +49,7 @@ class XiaMiSpider(CrawlSpider):
         # and follow links from them (since no callback means follow=True by default).
         
         Rule(LinkExtractor(allow=('/artist/[a-zA-Z0-9]{0,11}$', )), callback='parse_artist'),
-        Rule(LinkExtractor(allow=('/album/[a-zA-Z0-9]{0,11}$',)), callback='parse_albumPage'),
+        Rule(LinkExtractor(allow=('/album/[a-zA-Z0-9]{0,11}$',)), callback='parse_album'),
         Rule(LinkExtractor(allow=('/song/[a-zA-Z0-9]{0,11}$',)), callback='parse_song')
 
         # Extract links matching 'item.php' and parse them with the spider's method parse_item
