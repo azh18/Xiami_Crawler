@@ -38,8 +38,8 @@ class XiaMiSpider(CrawlSpider):
     allowed_domains = ['xiami.com']
     start_urls = []
     # total 416 1-50 51-180 181-416
-
-    for i in xrange(21, 30):
+    # pages 1-5
+    for i in xrange(1, 6):
         start_urls.append('http://www.xiami.com/artist/index/c/2/type/0/class/0/page/' + str(i))
 
     # test for one song
@@ -112,7 +112,7 @@ class XiaMiSpider(CrawlSpider):
             if len(pictureURL):
                 item['artistPict'] = pictureURL[0]
 
-            albumURL = u"http://www.xiami.com" + "".join(response.xpath(u"//*[@id='glory-nav']/a[4]/@href").extract())
+            albumURL = response.xpath(u"//*[@id='glory-nav']/a[4]/@href").extract()[0]
 
         else:
             if len(response.xpath(u"//*[@id='title']/h1/text()").extract()) == 0:
