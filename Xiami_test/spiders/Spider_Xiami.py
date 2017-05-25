@@ -47,8 +47,9 @@ class XiaMiSpider(CrawlSpider):
     rules = (
         # Extract links matching 'category.php' (but not matching 'subsection.php')
         # and follow links from them (since no callback means follow=True by default).
+        
         Rule(LinkExtractor(allow=('/artist/[a-zA-Z0-9]{0,11}$', )), callback='parse_artist'),
-        Rule(LinkExtractor(allow=('/album/[a-zA-Z0-9]{0,11}$',)), callback='parse_album'),
+        Rule(LinkExtractor(allow=('/album/[a-zA-Z0-9]{0,11}$',)), callback='parse_albumPage'),
         Rule(LinkExtractor(allow=('/song/[a-zA-Z0-9]{0,11}$',)), callback='parse_song')
 
         # Extract links matching 'item.php' and parse them with the spider's method parse_item
@@ -173,8 +174,12 @@ class XiaMiSpider(CrawlSpider):
         albumShortURLs = response.xpath((u"//*[@id='artist_albums']//div[@class='detail']//p[@class='name']//a[con"
                                          u"tains(@href,'album')]/@href")).extract()
         for su in albumShortURLs:
-            albumURL = u"http://www.xiami.com" + "".join(su)
-            yield scrapy.Request(albumURL, callback=self.parse_album)
+        	if ("i.xiami.com" in response.url):
+        		albumURL = su
+        		yield scrapy.Request(albumURL, callback=self.parse_album)
+        	else:
+        		albumURL = u"http://www.xiami.com" + "".join(su)
+        		yield scrapy.Request(albumURL, callback=self.parse_album)
         # extract next page, invoke parse_albumPage (if next page exist)
         nowPage = response.xpath(u"//*[@id='artist_albums']/div[@class='all_page']/a[contains(@class,'cur')]/text("
                                  u")").extract()
@@ -185,6 +190,7 @@ class XiaMiSpider(CrawlSpider):
                                       u"ef,'" + str(nowPage+1) + u"?')]/@href")).extract()
                 if len(nextURL):
                     nextURL = u"http://i.xiami.com" + "".join(nextURL[0])
+                    print("--------------------------------------------");
                     yield scrapy.Request(nextURL, callback=self.parse_albumPage)
         else:
             if len(nowPage):
